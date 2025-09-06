@@ -49,3 +49,34 @@ kubectl describe pdb demo-app-pdb-max
 - Only one PDB should be used at a time for the same set of pods
 - PDBs only apply to voluntary disruptions (node drains, upgrades, etc.)
 - They don't protect against involuntary disruptions (hardware failures, etc.)
+
+
+## Hands-on Steps for this PDB
+
+Let's go step by step for the case where a node has 2 pods and you try to drain it.
+
+### Setup
+- **node-01** → 2 pods
+- **node-02** → 1 pod
+- **Total** = 3 pods
+
+### 🔹 Case 1: minAvailable: 2
+**Rule**: At least 2 must always remain.
+
+If you drain node-01 → 2 pods evicted → only 1 left.
+- ✅ **Allowed?** No → because 1 < 2.
+- ❌ **Drain blocked**.
+
+### 🔹 Case 2: maxUnavailable: 1
+**Rule**: At most 1 pod can be unavailable.
+
+If you drain node-01 → 2 pods evicted at once.
+That's 2 unavailable.
+- ✅ **Allowed?** No → because 2 > 1.
+- ❌ **Drain blocked**.
+
+### ✅ Summary for your demo
+- **Drain node-02 (1 pod)** → ✅ Works in both cases.
+- **Drain node-01 (2 pods)** → ❌ Blocked in both cases (whether you use minAvailable=2 or maxUnavailable=1).
+
+That's the behavior you should highlight when showing a PDB demo.
