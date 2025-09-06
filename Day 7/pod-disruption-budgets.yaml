@@ -1,0 +1,22 @@
+---
+# PodDisruptionBudget with minAvailable
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: demo-app-pdb-min
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: demo
+---
+# PodDisruptionBudget with maxUnavailable
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: demo-app-pdb-max
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: demo

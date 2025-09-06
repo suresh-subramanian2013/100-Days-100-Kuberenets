@@ -1,0 +1,57 @@
+{
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml"
+  },
+  "yaml.schemas": {
+    "kubernetes": [
+      "*.k8s.yaml",
+      "*.k8s.yml",
+      "**/k8s/**/*.yaml",
+      "**/k8s/**/*.yml",
+      "**/kubernetes/**/*.yaml",
+      "**/kubernetes/**/*.yml",
+      "deployment.yaml",
+      "service.yaml",
+      "ingress.yaml",
+      "configmap.yaml",
+      "secret.yaml",
+      "pod.yaml",
+      "namespace.yaml",
+      "pv.yaml",
+      "pvc.yaml"
+    ]
+  },
+  "yaml.validate": true,
+  "yaml.completion": true,
+  "yaml.hover": true,
+  "yaml.format.enable": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "on",
+  "editor.formatOnSave": true,
+  "markdown.preview.breaks": true,
+  "markdown.preview.linkify": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.vscode": false
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true
+  },
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "extensions.recommendations": [
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json"
+  ]
+}
