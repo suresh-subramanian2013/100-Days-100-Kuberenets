@@ -2,18 +2,15 @@ apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
   name: default
-  labels:
-    app.kubernetes.io/name: karpenter-nodepool
 spec:
-  # Template section that describes the nodes that Karpenter will create
+  # Template for nodes created by this NodePool
   template:
     metadata:
-      # Labels that will be applied to all nodes created by this NodePool
+      # Labels to apply to nodes
       labels:
-        karpenter.sh/nodepool: default
-        node-type: karpenter-managed
+        provisioner: karpenter
     spec:
-      # Node requirements - Karpenter will provision nodes that meet these requirements
+      # Requirements for node selection
       requirements:
         - key: kubernetes.io/arch
           operator: In
@@ -30,36 +27,33 @@ spec:
             - "m5.large"
             - "m5.xlarge"
             - "m5.2xlarge"
-            - "m5.4xlarge"
-            - "m6i.large"
-            - "m6i.xlarge"
-            - "m6i.2xlarge"
             - "c5.large"
             - "c5.xlarge"
             - "c5.2xlarge"
+            - "t3.medium"
+            - "t3.large"
+            - "t3.xlarge"
 
-      # Node class reference
+      # Reference to EC2NodeClass
       nodeClassRef:
         apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: default
 
-      # Startup taints that will be applied to all nodes created by this NodePool
+      # Node startup and shutdown behavior
       startupTaints:
         - key: karpenter.sh/unschedulable
           value: "true"
           effect: NoSchedule
 
-  # Limits section that constrains the total amount of resources that this NodePool can create
+  # Disruption settings
+  disruption:
+    # Consolidation policy
+    consolidationPolicy: WhenUnderutilized
+    # Time to wait before terminating empty nodes
+    consolidateAfter: 30s
+
+  # Limits for this NodePool
   limits:
     cpu: 1000
     memory: 1000Gi
-
-  # Disruption section that describes the ways in which Karpenter can disrupt nodes
-  disruption:
-    # Describes which types of Kubernetes objects can trigger a disruption
-    consolidationPolicy: WhenUnderutilized
-    # The amount of time Karpenter should wait before attempting to disrupt a node
-    consolidateAfter: 30s
-    # Percentage of nodes that can be disrupted at once
-    expireAfter: 2160h # 90 days

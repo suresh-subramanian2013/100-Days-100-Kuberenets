@@ -2,54 +2,30 @@ apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
 metadata:
   name: default
-  labels:
-    app.kubernetes.io/name: karpenter-ec2nodeclass
 spec:
-  # AMI family that Karpenter will use when provisioning nodes
+  # AMI family for EKS optimized AMIs
   amiFamily: AL2
 
-  # Subnet selector - Karpenter will launch nodes into subnets that match these selectors
+  # Subnet selector - Karpenter will use subnets tagged with this key-value pair
   subnetSelectorTerms:
     - tags:
-        karpenter.sh/discovery: "CLUSTER_NAME_PLACEHOLDER"
+        karpenter.sh/discovery: "demo-cluster"
 
-  # Security group selector - Karpenter will apply security groups that match these selectors
+  # Security group selector - Karpenter will use security groups tagged with this key-value pair
   securityGroupSelectorTerms:
     - tags:
-        karpenter.sh/discovery: "CLUSTER_NAME_PLACEHOLDER"
+        karpenter.sh/discovery: "demo-cluster"
 
-  # Instance storePolicy specifies how to handle nodes with instance store
-  instanceStorePolicy: RAID0
+  # Instance profile for the nodes
+  role: "KarpenterNodeRole-demo-cluster"
 
-  # User data that will be applied to all nodes created by this EC2NodeClass
+  # User data script to bootstrap the node
   userData: |
     #!/bin/bash
-    /etc/eks/bootstrap.sh CLUSTER_NAME_PLACEHOLDER
+    /etc/eks/bootstrap.sh demo-cluster
 
-  # Role that nodes will use
-  role: "KarpenterNodeRole-CLUSTER_NAME_PLACEHOLDER"
-
-  # Tags that will be applied to all EC2 instances created by this EC2NodeClass
+  # Tags to apply to EC2 instances
   tags:
-    Name: "Karpenter-CLUSTER_NAME_PLACEHOLDER"
+    Name: "Karpenter-demo-cluster"
     Environment: "demo"
     ManagedBy: "Karpenter"
-    "karpenter.sh/discovery": "CLUSTER_NAME_PLACEHOLDER"
-
-  # Metadata options for the EC2 instances
-  metadataOptions:
-    httpEndpoint: enabled
-    httpProtocolIPv6: disabled
-    httpPutResponseHopLimit: 2
-    httpTokens: required
-
-  # Block device mappings for the nodes
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 20Gi
-        volumeType: gp3
-        iops: 3000
-        throughput: 125
-        deleteOnTermination: true
-        encrypted: true

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: karpenter-test-app
+  name: demo-app
   namespace: default
   labels:
-    app: karpenter-test
+    app: demo-app
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
-      app: karpenter-test
+      app: demo-app
   template:
     metadata:
       labels:
-        app: karpenter-test
+        app: demo-app
     spec:
       containers:
         - name: nginx
@@ -22,23 +22,14 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 100m
+              memory: 128Mi
             limits:
-              cpu: 1000m
-              memory: 1Gi
-      # This toleration allows the pod to be scheduled on Karpenter nodes
+              cpu: 200m
+              memory: 256Mi
+      # Toleration for Karpenter startup taints
       tolerations:
         - key: karpenter.sh/unschedulable
           operator: Equal
           value: "true"
           effect: NoSchedule
-      # Node affinity to prefer Karpenter nodes
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: karpenter.sh/nodepool
-                    operator: Exists
