@@ -1,31 +1,14 @@
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  # AMI family for EKS optimized AMIs
-  amiFamily: AL2
-
-  # Subnet selector - Karpenter will use subnets tagged with this key-value pair
+  role: "KarpenterNodeRole-demo-cluster"
+  amiSelectorTerms:
+    - alias: "al2023@v20241212"
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: "demo-cluster"
-
-  # Security group selector - Karpenter will use security groups tagged with this key-value pair
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "demo-cluster"
-
-  # Instance profile for the nodes
-  role: "KarpenterNodeRole-demo-cluster"
-
-  # User data script to bootstrap the node
-  userData: |
-    #!/bin/bash
-    /etc/eks/bootstrap.sh demo-cluster
-
-  # Tags to apply to EC2 instances
-  tags:
-    Name: "Karpenter-demo-cluster"
-    Environment: "demo"
-    ManagedBy: "Karpenter"

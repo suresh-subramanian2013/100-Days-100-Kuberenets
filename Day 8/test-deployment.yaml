@@ -1,35 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-app
-  namespace: default
-  labels:
-    app: demo-app
+  name: inflate
 spec:
-  replicas: 4
+  replicas: 0
   selector:
     matchLabels:
-      app: demo-app
+      app: inflate
   template:
     metadata:
       labels:
-        app: demo-app
+        app: inflate
     spec:
+      terminationGracePeriodSeconds: 0
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        fsGroup: 2000
       containers:
-        - name: nginx
-          image: nginx:1.25
-          ports:
-            - containerPort: 80
+        - name: inflate
+          image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-      # Toleration for Karpenter startup taints
-      tolerations:
-        - key: karpenter.sh/unschedulable
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
+              cpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
