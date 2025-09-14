@@ -1,0 +1,21 @@
+# Copy this file to terraform.tfvars and customize the values
+
+# Basic Configuration
+cluster_name = "my-karpenter-cluster"
+region       = "us-west-2"
+environment  = "dev"
+
+# Kubernetes and Karpenter Versions
+kubernetes_version = "1.33"
+karpenter_version  = "1.6.3"
+
+# Node Group Configuration
+node_instance_types = ["t3.medium"]
+node_desired_size   = 2
+node_min_size       = 1
+node_max_size       = 10
+
+# Karpenter Configuration
+enable_spot_instances = true
+karpenter_cpu_limit   = 1000
+node_expire_after     = "720h" # 30 days
