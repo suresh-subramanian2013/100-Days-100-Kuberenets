@@ -10,20 +10,52 @@ locals {
 }
 
 ################################################################################
+# VPC
+################################################################################
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = local.cluster_name
+  cidr = "10.0.0.0/16"
+
+  azs             = ["${local.region}a", "${local.region}b", "${local.region}c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+    # Tags subnets for Karpenter auto-discovery
+    "karpenter.sh/discovery" = local.cluster_name
+  }
+
+  tags = local.tags
+}
+
+################################################################################
 # EKS Cluster
 ################################################################################
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.24"
+  version = "~> 19.21"
 
   cluster_name    = local.cluster_name
   cluster_version = var.kubernetes_version
 
-  cluster_endpoint_config = {
-    private_access = true
-    public_access  = true
-  }
+  vpc_id                          = module.vpc.vpc_id
+  subnet_ids                      = module.vpc.private_subnets
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = true
 
   # EKS Managed Node Group(s)
   eks_managed_node_groups = {
@@ -40,8 +72,24 @@ module "eks" {
     }
   }
 
-  # Cluster access entry
-  enable_cluster_creator_admin_permissions = true
+  # Enable IRSA
+  enable_irsa = true
+
+  # Tags for Karpenter discovery
+  cluster_security_group_additional_rules = {
+    ingress_nodes_ephemeral_ports_tcp = {
+      description                = "Node groups to cluster API"
+      protocol                   = "tcp"
+      from_port                  = 1025
+      to_port                    = 65535
+      type                       = "ingress"
+      source_node_security_group = true
+    }
+  }
+
+  node_security_group_tags = {
+    "karpenter.sh/discovery" = local.cluster_name
+  }
 
   tags = local.tags
 }
@@ -51,16 +99,63 @@ module "eks" {
 ################################################################################
 
 module "karpenter" {
-  source = "terraform-aws-modules/eks/aws//modules/karpenter"
+  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
+  version = "~> 19.21"
 
   cluster_name = module.eks.cluster_name
 
-  # Used to attach additional IAM policies to the Karpenter node IAM role
-  node_iam_role_additional_policies = {
-    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  }
+  # IRSA configuration
+  irsa_oidc_provider_arn          = module.eks.oidc_provider_arn
+  irsa_namespace_service_accounts = ["karpenter:karpenter"]
+
+  # Enable spot termination handling
+  enable_spot_termination = true
+
+  # Create instance profile
+  create_instance_profile = true
 
   tags = local.tags
+}
+
+################################################################################
+# Additional IAM Policy for Karpenter IRSA
+################################################################################
+
+resource "aws_iam_policy" "karpenter_additional" {
+  name_prefix = "KarpenterAdditional-${local.cluster_name}-"
+  description = "Additional IAM policy for Karpenter IRSA role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetInstanceProfile",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:TagInstanceProfile",
+          "iam:UntagInstanceProfile",
+          "iam:PassRole"
+        ]
+        Resource = [
+          "arn:aws:iam::*:instance-profile/KarpenterNodeInstanceProfile-*",
+          "arn:aws:iam::*:instance-profile/*_*",
+          "arn:aws:iam::*:role/KarpenterNode*",
+          module.karpenter.role_arn
+        ]
+      }
+    ]
+  })
+
+  tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_additional" {
+  policy_arn = aws_iam_policy.karpenter_additional.arn
+  role       = module.karpenter.irsa_name
 }
 
 ################################################################################
@@ -83,7 +178,7 @@ resource "helm_release" "karpenter" {
       interruptionQueue: ${module.karpenter.queue_name}
     serviceAccount:
       annotations:
-        eks.amazonaws.com/role-arn: ${module.karpenter.iam_role_arn}
+        eks.amazonaws.com/role-arn: ${module.karpenter.irsa_arn}
     EOT
   ]
 
@@ -145,7 +240,7 @@ resource "kubectl_manifest" "karpenter_node_class" {
     metadata:
       name: default
     spec:
-      role: ${module.karpenter.node_iam_role_name}
+      role: ${module.karpenter.role_name}
       amiSelectorTerms:
         - alias: "al2023@latest"
       subnetSelectorTerms:

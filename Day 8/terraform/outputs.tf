@@ -51,54 +51,24 @@ output "cluster_primary_security_group_id" {
 # Karpenter
 ################################################################################
 
-output "karpenter_iam_role_name" {
-  description = "The name of the Karpenter controller IAM role"
-  value       = module.karpenter.iam_role_name
+output "karpenter_irsa_arn" {
+  description = "The Amazon Resource Name (ARN) specifying the Karpenter IRSA role"
+  value       = module.karpenter.irsa_arn
 }
 
-output "karpenter_iam_role_arn" {
-  description = "The Amazon Resource Name (ARN) specifying the Karpenter controller IAM role"
-  value       = module.karpenter.iam_role_arn
-}
-
-output "karpenter_iam_role_unique_id" {
-  description = "Stable and unique string identifying the Karpenter controller IAM role"
-  value       = module.karpenter.iam_role_unique_id
-}
-
-output "karpenter_node_iam_role_name" {
+output "karpenter_role_name" {
   description = "The name of the Karpenter node IAM role"
-  value       = module.karpenter.node_iam_role_name
+  value       = module.karpenter.role_name
 }
 
-output "karpenter_node_iam_role_arn" {
+output "karpenter_role_arn" {
   description = "The Amazon Resource Name (ARN) specifying the Karpenter node IAM role"
-  value       = module.karpenter.node_iam_role_arn
-}
-
-output "karpenter_node_iam_role_unique_id" {
-  description = "Stable and unique string identifying the Karpenter node IAM role"
-  value       = module.karpenter.node_iam_role_unique_id
-}
-
-output "karpenter_instance_profile_arn" {
-  description = "ARN assigned by AWS to the instance profile"
-  value       = module.karpenter.instance_profile_arn
-}
-
-output "karpenter_instance_profile_id" {
-  description = "Instance profile's ID"
-  value       = module.karpenter.instance_profile_id
+  value       = module.karpenter.role_arn
 }
 
 output "karpenter_instance_profile_name" {
   description = "Name of the instance profile"
   value       = module.karpenter.instance_profile_name
-}
-
-output "karpenter_instance_profile_unique_id" {
-  description = "Stable and unique string identifying the IAM instance profile"
-  value       = module.karpenter.instance_profile_unique_id
 }
 
 output "karpenter_queue_arn" {

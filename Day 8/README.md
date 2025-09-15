@@ -56,23 +56,16 @@ The Karpenter module creates the following AWS resources:
 
 ## Deployment Steps
 
-### 1. Quick Setup (Recommended)
-```bash
-cd terraform
-chmod +x init.sh
-./init.sh
-```
-
-### 2. Manual Setup
+### 1. Configure Variables
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your desired configuration
-terraform init
 ```
 
-### 3. Deploy Infrastructure
+### 2. Initialize and Deploy
 ```bash
+terraform init
 terraform plan
 terraform apply
 ```
